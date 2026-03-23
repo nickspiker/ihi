@@ -1,0 +1,16 @@
+[package]
+name = "ihi"
+version = "0.0.0"
+edition = "2021"
+description = "Identity crypto primitives: spaghettify chaos amplifier, smear_hash, handle_proof"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/nickspiker/ihi"
+keywords = ["cryptography", "hash", "no-std", "identity"]
+categories = ["cryptography", "no-std"]
+
+[dependencies]
+spirix = "0.0.8"
+blake3 = { version = "1", default-features = false }
+sha2 = { version = "0.10", default-features = false }
+sha3 = { version = "0.10", default-features = false }
+i256 = { version = "0.2", default-features = false }
