@@ -1,4 +1,4 @@
-use crate::smear::smear_hash;
+use crate::smear::smear_hash_parts;
 use i256::U256;
 use spirix::ScalarF4E4;
 
@@ -459,15 +459,13 @@ pub fn spaghettify(input: &[u8]) -> [u8; 32] {
         }
     }
 
-    // Phase 4: Collapse 53 U256 buckets → bytes, append input, then smear_hash
+    // Phase 4: Collapse 53 U256 buckets → bytes, append input, then smear_hash.
     // Defense in depth: if spaghettify has unknown weaknesses, original input
     // is still mixed in. Output is secure if ANY layer survives (like CLUTCH).
-    let mut state_bytes = alloc::vec::Vec::with_capacity(BUCKETS * 32 + input.len());
-    for bucket in &buckets {
-        state_bytes.extend_from_slice(&bucket.to_be_bytes());
-    }
-    state_bytes.extend_from_slice(input); // Append original input
-
-    // Use smear_hash to collapse to 32 bytes with hash algorithm diversity
-    smear_hash(&state_bytes)
+    // Feed buckets + input as separate parts — no allocation needed.
+    let bucket_bytes: [[u8; 32]; BUCKETS] = core::array::from_fn(|i| buckets[i].to_be_bytes());
+    let mut parts: [&[u8]; BUCKETS + 1] = [&[]; BUCKETS + 1];
+    for i in 0..BUCKETS { parts[i] = &bucket_bytes[i]; }
+    parts[BUCKETS] = input;
+    smear_hash_parts(&parts)
 }
