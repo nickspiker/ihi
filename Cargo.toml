@@ -1,6 +1,6 @@
 [package]
 name = "ihi"
-version = "0.0.2"
+version = "0.0.3"
 edition = "2021"
 description = "Identity crypto primitives: spaghettify chaos amplifier, smear_hash, handle_proof"
 license = "MIT OR Apache-2.0"
@@ -14,7 +14,7 @@ default = ["handle"]
 handle = []
 
 [dependencies]
-spirix = { version = "0.0.10", default-features = false }
+spirix = { version = "0.0.11", default-features = false }
 blake3 = { version = "1", default-features = false }
 sha2 = { version = "0.10", default-features = false }
 sha3 = { version = "0.10", default-features = false }
