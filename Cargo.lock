@@ -118,7 +118,7 @@ checksum = "a8ef3cf3581bc32d50c9e593ff6bad06c85054861ea6cc640660d73490c2c316"
 
 [[package]]
 name = "ihi"
-version = "0.0.0"
+version = "0.0.1"
 dependencies = [
  "blake3",
  "i256",
