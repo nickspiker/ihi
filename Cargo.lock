@@ -118,7 +118,7 @@ checksum = "a8ef3cf3581bc32d50c9e593ff6bad06c85054861ea6cc640660d73490c2c316"
 
 [[package]]
 name = "ihi"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "blake3",
  "i256",
@@ -198,9 +198,9 @@ checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
 
 [[package]]
 name = "spirix"
-version = "0.0.9"
+version = "0.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a17137c6354d8109f855e11629da67d2127bc2ca787d5e8b97f93dcf1bf67d96"
+checksum = "8989215c575eb0769671d3dd53745dca2a06191f68e7c79643001929855b2019"
 dependencies = [
  "i256",
  "num-complex",
