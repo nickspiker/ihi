@@ -1,6 +1,6 @@
 [package]
 name = "ihi"
-version = "0.0.0"
+version = "0.0.1"
 edition = "2021"
 description = "Identity crypto primitives: spaghettify chaos amplifier, smear_hash, handle_proof"
 license = "MIT OR Apache-2.0"
