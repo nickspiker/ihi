@@ -8,17 +8,14 @@ use sha3::{Digest as Sha3Digest, Sha3_256};
 /// - SHA3-256: Keccak sponge construction (NIST standard, permutation-based)
 /// - SHA-512: Merkle-Damgård with ARX rounds (battle-tested, truncated to 32 bytes)
 ///
-/// If ANY algorithm survives cryptanalysis, the output remains secure.
-/// An attacker must break ALL THREE simultaneously to compromise the result.
+/// If ANY algorithm survives cryptanalysis, the output remains secure. An attacker must break ALL THREE simultaneously to compromise the result.
 ///
-/// Not memory-hard - that's not the goal. The input is already high-entropy
-/// from the avalanche mixing. This adds hash algorithm diversity.
+/// Not memory-hard — that's not the goal. The input is already high-entropy from the avalanche mixing; this adds hash algorithm diversity.
 pub fn smear_hash(data: &[u8]) -> [u8; 32] {
     smear_hash_parts(&[data])
 }
 
-/// Smear hash over multiple slices fed sequentially — no allocation needed.
-/// Identical output to `smear_hash(&[a, b, ...].concat())`.
+/// Smear hash over multiple slices fed sequentially — no allocation needed. Identical output to `smear_hash(&[a, b, ...].concat())`.
 pub fn smear_hash_parts(parts: &[&[u8]]) -> [u8; 32] {
     // BLAKE3 - Merkle tree of ChaCha-based compression
     let mut b3 = blake3::Hasher::new();

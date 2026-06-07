@@ -10,28 +10,42 @@ This crate computes exactly that.
 
 ```toml
 [dependencies]
-ihi = "0.0.0"
+ihi = "0.0.42"
 ```
 
 ---
 
 ## Primitives
 
+### `chaos_amp(input: &[u8; 64]) -> [u8; 48]`
+
+The core mixing primitive. **Bit-exact with PIPE's silicon Verilog** (`/mnt/Octopus/Code/pipe/rtl/chaos_amp_v2.v`) — same algorithm, two implementations (software + FPGA), one byte-level contract. Pure integer arithmetic; zero floating point; zero transitive dependencies that can drift.
+
+16 buckets × 24 bits each (384-bit state). 16 rounds. Each round is two phases: data-dependent op-selection (a 32-op ALU menu picked per bucket from `val[4:0]`) followed by ARX cross-bucket diffusion. Full avalanche over the state in ~5-8 rounds; 16 rounds for margin.
+
 ### `spaghettify(input: &[u8]) -> [u8; 32]`
 
-Transparently irreversible chaos amplifier. 53 buckets, 23 operations per bucket per round, 11–23 data-dependent rounds.
+Transparently irreversible chaos amplifier for arbitrary-length input. Wraps `chaos_amp` with BLAKE3-XOF absorption (input → 64 bytes) and a defense-in-depth finalizer (`smear_hash` over `chaos_state || original_input`).
 
-Unlike traditional hash functions whose hardness is conjectured ("we believe SHA-3 is one-way"), spaghettify's hardness is **auditable by inspection**:
+Unlike traditional hash functions whose hardness is conjectured ("we believe SHA-3 is one-way"), spaghettify's hardness is **auditable by inspection**. Counting paths:
 
 ```
-Minimum paths to invert: 23^(53×11) ≈ 10^792
-Maximum paths to invert: 23^(53×23) ≈ 10^1656
-Atoms in observable universe: ~10^80
+Op-selection entropy:   5 bits × 16 buckets × 16 rounds   = 1280 bits ≈ 10^385
+Shift/rotate entropy:   4 bits × 30% × 256 op-applications ≈  300 bits
+Branch entropy (CSWAP): 1 bit  ×  3% × 256 op-applications ≈    8 bits
+                                                            ───────────
+Total distinct paths through one chaos_amp:                  ~10^482
+
+Atoms in the observable universe:                            ~10^80
 ```
 
-Count the paths yourself. The operations are listed. The collision ratios are measured. This isn't a claim — it's arithmetic.
+How to count: each (bucket, round) cell independently picks one of 32 ops based on `val[4:0]`. With 16 buckets × 16 rounds = 256 cells, op-selection alone enumerates `32^256 = 2^1280 ≈ 10^385` distinct op-sequences. About 30% of those ops add 4 bits of shift/rotate entropy on top, and op 21 (CSWAP) adds 1 bit of branch entropy when it fires (~3% of the time). The combined ~1600 bits ≈ 10^482 is the path-explosion bound an attacker would need to enumerate to invert the chaos layer alone.
 
-Deterministic across all platforms via [Spirix](https://crates.io/crates/spirix) — two's complement floating-point that eliminates IEEE 754 implementation-defined behavior.
+To forge an identity then requires **either** inverting the smear_hash finalizer (simultaneously breaking BLAKE3 ⊕ SHA3-256 ⊕ SHA-512) **or** inverting BLAKE3-XOF AND navigating ~10^482 paths through chaos_amp. The math does not care if you trust it.
+
+Information loss compounds the argument: 11 lossy + 3 extreme-lossy ops in the 32-op menu (44% of the menu) destroy 4-23 bits per application. Over 256 op-applications per call, ~700-2500 cumulative bits are destroyed — collisions are guaranteed to exist by the pigeonhole principle, they just cannot be navigated to.
+
+**See [PROOF.md](PROOF.md)** for the step-by-step walkthrough: counting the op-selection paths (10³⁸⁵), adding shift entropy (300 bits), adding branch entropy, the per-op information-loss table, why path explosion and information loss compound rather than substitute, and what the proof does *not* claim. [SPAGHETTIFY.md](SPAGHETTIFY.md) is the engineering deep-dive (state layout, op menu, NUMS provenance, silicon-software unification with PIPE, porting checklist).
 
 ### `smear_hash(input: &[u8]) -> [u8; 32]`
 
@@ -48,14 +62,22 @@ Memory-hard sequential proof-of-work for identity registration. Deterministic �
 ## Design
 
 ```
-ihi = spaghettify(system_secret || developer_pubkey || option)
+identity = spaghettify(system_secret || developer_pubkey || option)
 ```
 
 The process doesn't assert its identity. The oracle looks at what the process provably **is** — binary content, signing authority, hardware state — and derives what flows from that nature.
 
-To forge ihi requires navigating a minimum of 10^792 paths through spaghettify. There are ~10^80 atoms in the observable universe.
+To forge an identity requires either breaking the multi-hash finalizer or navigating ~10^482 paths through the chaos amplifier. There are ~10^80 atoms in the observable universe. The full counting walkthrough lives in [PROOF.md](PROOF.md).
 
-The math does not care whether you trust it.
+The math does not care if you trust it.
+
+---
+
+## Determinism contract
+
+ihi has **zero non-deterministic transitive dependencies**, by construction. Every byte of every output comes from pure integer arithmetic over fixed-width types. No floating point. No platform-defined behavior. No `#[cfg(target_*)]` branches that change output bytes.
+
+`tests/test_vectors.rs` locks the byte output of every public function on a diverse set of inputs. Any future change to ihi, its dependencies, or rustc that alters output bytes will fail the test immediately and loudly. Cross-implementation ports (C, JS, future hardware) must reproduce these exact bytes.
 
 ---
 

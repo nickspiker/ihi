@@ -1,6 +1,6 @@
 [package]
 name = "ihi"
-version = "0.0.3"
+version = "0.0.42"
 edition = "2021"
 description = "Identity crypto primitives: spaghettify chaos amplifier, smear_hash, handle_proof"
 license = "MIT OR Apache-2.0"
@@ -14,7 +14,28 @@ default = ["handle"]
 handle = []
 
 [dependencies]
-spirix = { version = "0.0.11", default-features = false }
+# CRYPTOGRAPHY (n.): the design of mathematical protocols whose security properties — confidentiality, integrity, authenticity, identity, non-repudiation — must hold against any adversary with full knowledge of the protocol's specification. For hash-based identity primitives like `handle_proof`, `smear_hash`, `spaghettify`, and `chaos_amp` there is NO secret — security reduces entirely to the function being a fixed, total, deterministic map from input bytes to output bytes that every party — today, tomorrow, a billion years from now, on every architecture — computes identically.
+#
+# ─── ZERO NON-DETERMINISTIC DEPENDENCIES — BY CONSTRUCTION ───
+#
+# Every byte of every output from this crate is computed by pure integer arithmetic over fixed-width types (u8/u16/u32/u64/i8/i16, plus i256's U256). No floating point. No allocation-order-dependent state. No platform-defined behavior. No `#[cfg(target_*)]` branches. The chaos amplifier (`chaos_amp`) is bit-exact with PIPE's silicon Verilog at `/mnt/Octopus/Code/pipe/rtl/chaos_amp_v2.v` — same algorithm, two implementations, one byte-level contract.
+#
+# The transitive dependency surface below is deliberately and PERMANENTLY restricted to:
+#   - blake3, sha2, sha3: cryptographic hash functions with frozen wire formats. Their output bytes are specified at the bit level by their respective standards (RFC 9381, FIPS 180-4, FIPS 202). A patch-version bump may change implementation details (SIMD lanes, lookup tables) but CANNOT change output bytes without breaking the published standard.
+#   - i256: 256-bit integer arithmetic. Pure wrapping/wrapping_add semantics; same output bytes from same inputs across every architecture by definition of two's-complement integers.
+#
+# DO NOT ADD a dependency that has any of the following properties:
+#   1. Performs floating-point arithmetic (IEEE 754 rounding mode, denormal handling, fused-multiply-add availability all vary by target)
+#   2. Has internal randomness, thread-local state, or allocation-order-dependent output
+#   3. Has a wire format whose maintainers haven't committed to byte-level stability across versions
+#   4. Has its own transitive deps with any of (1), (2), or (3)
+#
+# DO NOT BUMP minor or major versions of the deps below without:
+#   - Reading that dep's release notes for any phrase resembling "output bytes change", "algorithm version", or "wire format" — they're rare in mature hash libraries but not impossible
+#   - Running `cargo test --release` to confirm every byte in tests/test_vectors.rs still matches
+#   - If ANY vector changes: STOP. Do not commit. A vector change means every published identity in the system has been silently invalidated. The correct response is an ihi MAJOR version bump (0.x → 1.0) plus coordinated re-attestation of every existing identity, not a silent dep bump.
+#
+# Historical note: an earlier version of this crate depended on `spirix` (deterministic floating-point) for the spaghettify chaos layer. That dependency was removed and replaced with `chaos_amp` (pure integer math) precisely because a silent spirix minor-version bump across published ihi versions caused a bifurcated identity namespace — the same handle string resolved to different public IDs depending on which ihi version Cargo happened to pick. ihi has no transitive deps that can drift now. Keep it that way.
 blake3 = { version = "1", default-features = false }
 sha2 = { version = "0.10", default-features = false }
 sha3 = { version = "0.10", default-features = false }

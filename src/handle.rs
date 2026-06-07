@@ -48,12 +48,12 @@ const ROUNDS: usize = 17; // Tuned for ~1s on 2025 hardware
 ///
 /// # Examples
 ///
-/// ```rust,ignore
-/// let handle = "fractal decoder";
-/// let vsf_bytes = vsf::VsfType::x(handle.to_string()).flatten();
-/// let handle_hash = blake3::hash(&vsf_bytes);
-/// let public_id = handle_proof(&handle_hash);
+/// ```rust,no_run
+/// use ihi::handle_to_proof;
+/// let public_id = handle_to_proof("fractal decoder");
 /// ```
+///
+/// For callers that need to manage the BLAKE3 pre-hash themselves, this lower-level entry point accepts the hash directly. The canonical pipeline for a plaintext handle is [`handle_to_proof`].
 pub fn handle_proof(hash: &blake3::Hash) -> blake3::Hash {
     // Allocate scratch buffer without initialization (for performance)
     let mut scratch = Vec::with_capacity(SIZE);
@@ -135,4 +135,54 @@ pub fn handle_proof(hash: &blake3::Hash) -> blake3::Hash {
 
     // Final hash is the public ID - deterministic, verifiable, expensive to compute
     round_hash
+}
+
+/// Compute the deterministic public ID for a plaintext handle string.
+///
+/// Pipeline: `blake3(handle.as_bytes())` → [`handle_proof`]. Raw UTF-8 bytes are fed directly into BLAKE3 with no intermediate framing (no VSF type marker, no length prefix, no salt) — keeps the input spec the shortest possible thing to document, immune to wire-format byte renames elsewhere in the stack, and unicode-friendly out of the box.
+///
+/// Returns the 32-byte proof. Use [`proof_to_filename`] to convert to a base64url filename for capsule storage.
+///
+/// This is the canonical entry point — every component in the stack (photon, vsf::handle, toka, fgtw) should call this rather than rolling its own pre-hash step. Drift between callers caused real bugs (handle "octopus" producing different proofs on different clients) before this consolidation.
+pub fn handle_to_proof(handle: &str) -> blake3::Hash {
+    let handle_hash = blake3::hash(handle.as_bytes());
+    handle_proof(&handle_hash)
+}
+
+/// Encode a handle proof as a base64url filename with `.vsf` extension.
+///
+/// Uses the RFC 4648 base64url alphabet (A-Z, a-z, 0-9, `-`, `_`) for filesystem and URL safety; no padding (the proof is exactly 32 bytes → 43 base64url chars, no ambiguity). Suffixed with `.vsf` so the filename is self-describing as a VSF capsule.
+pub fn proof_to_filename(proof: &blake3::Hash) -> alloc::string::String {
+    use alloc::string::String;
+    const ALPHABET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+    let bytes = proof.as_bytes();
+    let mut encoded = String::with_capacity(47); // 43 base64url chars + ".vsf"
+    let mut i = 0;
+    while i + 3 <= bytes.len() {
+        let chunk = (bytes[i] as u32) << 16 | (bytes[i + 1] as u32) << 8 | (bytes[i + 2] as u32);
+        encoded.push(ALPHABET[(chunk >> 18) as usize & 0x3F] as char);
+        encoded.push(ALPHABET[(chunk >> 12) as usize & 0x3F] as char);
+        encoded.push(ALPHABET[(chunk >> 6) as usize & 0x3F] as char);
+        encoded.push(ALPHABET[chunk as usize & 0x3F] as char);
+        i += 3;
+    }
+    if i < bytes.len() {
+        let rem = bytes.len() - i;
+        let mut chunk = (bytes[i] as u32) << 16;
+        if rem == 2 {
+            chunk |= (bytes[i + 1] as u32) << 8;
+        }
+        encoded.push(ALPHABET[(chunk >> 18) as usize & 0x3F] as char);
+        encoded.push(ALPHABET[(chunk >> 12) as usize & 0x3F] as char);
+        if rem == 2 {
+            encoded.push(ALPHABET[(chunk >> 6) as usize & 0x3F] as char);
+        }
+    }
+    encoded.push_str(".vsf");
+    encoded
+}
+
+/// Convenience shortcut: handle string → base64url `.vsf` filename. Equivalent to `proof_to_filename(&handle_to_proof(handle))`. Runs the ~1s memory-hard proof; reuse the [`blake3::Hash`] from [`handle_to_proof`] across multiple filename derivations rather than calling this in a loop.
+pub fn handle_to_filename(handle: &str) -> alloc::string::String {
+    proof_to_filename(&handle_to_proof(handle))
 }
