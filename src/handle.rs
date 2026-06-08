@@ -137,16 +137,24 @@ pub fn handle_proof(hash: &blake3::Hash) -> blake3::Hash {
     round_hash
 }
 
+/// Canonical handle hash — `BLAKE3(handle.as_bytes())`. The exposed intermediate state on the way to [`handle_to_proof`], usable as a deterministic 32-byte derivation seed wherever a handle string needs to map to fixed bytes.
+///
+/// Pipeline position: this is the FIRST half of [`handle_to_proof`]'s computation. The second half is the memory-hard PoW. Calling this directly gives consumers the cheap pre-hash (no PoW; sub-microsecond) for use cases that don't need the anti-squatting cost — e.g. local-only contact-table keys, avatar Ed25519 keypair seeds, message-encryption sub-key derivation.
+///
+/// Raw UTF-8 bytes are fed directly into BLAKE3 — no VSF type marker, no length prefix, no salt. Same input spec as [`handle_to_proof`]; same canonical answer across photon / vsf / toka / fgtw / any future consumer.
+pub fn handle_to_hash(handle: &str) -> blake3::Hash {
+    blake3::hash(handle.as_bytes())
+}
+
 /// Compute the deterministic public ID for a plaintext handle string.
 ///
-/// Pipeline: `blake3(handle.as_bytes())` → [`handle_proof`]. Raw UTF-8 bytes are fed directly into BLAKE3 with no intermediate framing (no VSF type marker, no length prefix, no salt) — keeps the input spec the shortest possible thing to document, immune to wire-format byte renames elsewhere in the stack, and unicode-friendly out of the box.
+/// Pipeline: [`handle_to_hash`] → [`handle_proof`]. Raw UTF-8 bytes are fed directly into BLAKE3 with no intermediate framing (no VSF type marker, no length prefix, no salt) — keeps the input spec the shortest possible thing to document, immune to wire-format byte renames elsewhere in the stack, and unicode-friendly out of the box.
 ///
 /// Returns the 32-byte proof. Use [`proof_to_filename`] to convert to a base64url filename for capsule storage.
 ///
 /// This is the canonical entry point — every component in the stack (photon, vsf::handle, toka, fgtw) should call this rather than rolling its own pre-hash step. Drift between callers caused real bugs (handle "octopus" producing different proofs on different clients) before this consolidation.
 pub fn handle_to_proof(handle: &str) -> blake3::Hash {
-    let handle_hash = blake3::hash(handle.as_bytes());
-    handle_proof(&handle_hash)
+    handle_proof(&handle_to_hash(handle))
 }
 
 /// Encode a handle proof as a base64url filename with `.vsf` extension.
