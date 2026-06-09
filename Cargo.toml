@@ -1,6 +1,6 @@
 [package]
 name = "ihi"
-version = "0.0.42"
+version = "0.0.43"
 edition = "2021"
 description = "Identity crypto primitives: spaghettify chaos amplifier, smear_hash, handle_proof"
 license = "MIT OR Apache-2.0"
@@ -11,7 +11,7 @@ categories = ["cryptography", "no-std"]
 [features]
 default = ["handle"]
 # handle_proof requires alloc — disable for bare-metal targets
-handle = []
+handle = ["dep:vsf"]
 
 [dependencies]
 # CRYPTOGRAPHY (n.): the design of mathematical protocols whose security properties — confidentiality, integrity, authenticity, identity, non-repudiation — must hold against any adversary with full knowledge of the protocol's specification. For hash-based identity primitives like `handle_proof`, `smear_hash`, `spaghettify`, and `chaos_amp` there is NO secret — security reduces entirely to the function being a fixed, total, deterministic map from input bytes to output bytes that every party — today, tomorrow, a billion years from now, on every architecture — computes identically.
@@ -37,6 +37,7 @@ handle = []
 #
 # Historical note: an earlier version of this crate depended on `spirix` (deterministic floating-point) for the spaghettify chaos layer. That dependency was removed and replaced with `chaos_amp` (pure integer math) precisely because a silent spirix minor-version bump across published ihi versions caused a bifurcated identity namespace — the same handle string resolved to different public IDs depending on which ihi version Cargo happened to pick. ihi has no transitive deps that can drift now. Keep it that way.
 blake3 = { version = "1", default-features = false }
+vsf = { version = "0.3.6", default-features = false, features = ["text-encode"], optional = true }
 sha2 = { version = "0.10", default-features = false }
 sha3 = { version = "0.10", default-features = false }
 i256 = { version = "0.2", default-features = false }

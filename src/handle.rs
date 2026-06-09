@@ -130,22 +130,25 @@ pub fn handle_proof(hash: &blake3::Hash) -> blake3::Hash {
     round_hash
 }
 
-/// Canonical handle hash — `BLAKE3(handle.as_bytes())`. The exposed intermediate state on the way to [`handle_to_proof`], usable as a deterministic 32-byte derivation seed wherever a handle string needs to map to fixed bytes.
+/// Canonical handle hash — `BLAKE3(VsfType::x(handle).flatten())`. The exposed intermediate state on the way to [`handle_to_proof`], usable as a deterministic 32-byte derivation seed wherever a handle string needs to map to fixed bytes.
 ///
 /// Pipeline position: this is the FIRST half of [`handle_to_proof`]'s computation. The second half is the memory-hard PoW. Calling this directly gives consumers the cheap pre-hash (no PoW; sub-microsecond) for use cases that don't need the anti-squatting cost — e.g. local-only contact-table keys, avatar Ed25519 keypair seeds, message-encryption sub-key derivation.
 ///
-/// Raw UTF-8 bytes are fed directly into BLAKE3 — no VSF type marker, no length prefix, no salt. Same input spec as [`handle_to_proof`]; same canonical answer across photon / vsf / toka / fgtw / any future consumer.
+/// The handle string is wrapped in `VsfType::x` and flattened to its canonical binary representation before hashing. This ensures deterministic Unicode handling — the same logical text always produces the same bytes regardless of normalization form, preventing café/café-class identity splits.
 pub fn handle_to_hash(handle: &str) -> blake3::Hash {
-    blake3::hash(handle.as_bytes())
+    use alloc::string::ToString;
+    use vsf::types::VsfType;
+    let vsf_bytes = VsfType::x(handle.to_string()).flatten();
+    blake3::hash(&vsf_bytes)
 }
 
 /// Compute the deterministic public ID for a plaintext handle string.
 ///
-/// Pipeline: [`handle_to_hash`] → [`handle_proof`]. Raw UTF-8 bytes are fed directly into BLAKE3 with no intermediate framing (no VSF type marker, no length prefix, no salt) — keeps the input spec the shortest possible thing to document, immune to wire-format byte renames elsewhere in the stack, and unicode-friendly out of the box.
+/// Pipeline: [`handle_to_hash`] → [`handle_proof`]. The handle is wrapped in `VsfType::x` and flattened to canonical binary form before BLAKE3 hashing, ensuring deterministic Unicode handling. The resulting hash is then fed through the memory-hard PoW.
 ///
 /// Returns the 32-byte proof. Use [`proof_to_filename`] to convert to a base64url filename for capsule storage.
 ///
-/// This is the canonical entry point — every component in the stack (photon, vsf::handle, toka, fgtw) should call this rather than rolling its own pre-hash step. Drift between callers caused real bugs (handle "octopus" producing different proofs on different clients) before this consolidation.
+/// This is the canonical entry point — every component in the stack (photon, vsf::handle, toka, fgtw) should call this rather than rolling its own pre-hash step.
 pub fn handle_to_proof(handle: &str) -> blake3::Hash {
     handle_proof(&handle_to_hash(handle))
 }
