@@ -1,6 +1,6 @@
 # PROOF.md — counting the paths
 
-This document walks through the security proof for `chaos_amp` and `spaghettify` from first principles. The goal is to convince a careful reader, with a calculator and the source code open in another window, that ihi's mixing core resists inversion by combinatorial enumeration. No appeals to authority, no "cryptographic hardness assumption" — just counting.
+This document walks thru the security proof for `chaos_amp` and `spaghettify` from first principles. The goal is to convince a careful reader, with a calculator and the source code open in another window, that ihi's mixing core resists inversion by combinatorial enumeration. No appeals to authority, no "cryptographic hardness assumption" — just counting.
 
 The argument has two independent prongs that compound multiplicatively:
 
@@ -47,7 +47,7 @@ In decimal:
 2^1280 ≈ 10^(1280 × log₁₀ 2) ≈ 10^(1280 × 0.30103) ≈ 10^385.3
 ```
 
-So `op-sequences ≈ 10^385`. (We'll round to the nearest integer exponent throughout — the 10⁴⁸² total is approximate anyway.)
+So `op-sequences ≈ 10^385`. (We'll round to the nearest integer exponent thruout — the 10⁴⁸² total is approximate anyway.)
 
 ### 2.3 Sanity check: why "independent" is the right framing
 

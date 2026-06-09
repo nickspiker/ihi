@@ -34,18 +34,18 @@ Op-selection entropy:   5 bits × 16 buckets × 16 rounds   = 1280 bits ≈ 10^3
 Shift/rotate entropy:   4 bits × 30% × 256 op-applications ≈  300 bits
 Branch entropy (CSWAP): 1 bit  ×  3% × 256 op-applications ≈    8 bits
                                                             ───────────
-Total distinct paths through one chaos_amp:                  ~10^482
+Total distinct paths thru one chaos_amp:                  ~10^482
 
 Atoms in the observable universe:                            ~10^80
 ```
 
 How to count: each (bucket, round) cell independently picks one of 32 ops based on `val[4:0]`. With 16 buckets × 16 rounds = 256 cells, op-selection alone enumerates `32^256 = 2^1280 ≈ 10^385` distinct op-sequences. About 30% of those ops add 4 bits of shift/rotate entropy on top, and op 21 (CSWAP) adds 1 bit of branch entropy when it fires (~3% of the time). The combined ~1600 bits ≈ 10^482 is the path-explosion bound an attacker would need to enumerate to invert the chaos layer alone.
 
-To forge an identity then requires **either** inverting the smear_hash finalizer (simultaneously breaking BLAKE3 ⊕ SHA3-256 ⊕ SHA-512) **or** inverting BLAKE3-XOF AND navigating ~10^482 paths through chaos_amp. The math does not care if you trust it.
+To forge an identity then requires **either** inverting the smear_hash finalizer (simultaneously breaking BLAKE3 ⊕ SHA3-256 ⊕ SHA-512) **or** inverting BLAKE3-XOF AND navigating ~10^482 paths thru chaos_amp. The math does not care if you trust it.
 
 Information loss compounds the argument: 11 lossy + 3 extreme-lossy ops in the 32-op menu (44% of the menu) destroy 4-23 bits per application. Over 256 op-applications per call, ~700-2500 cumulative bits are destroyed — collisions are guaranteed to exist by the pigeonhole principle, they just cannot be navigated to.
 
-**See [PROOF.md](PROOF.md)** for the step-by-step walkthrough: counting the op-selection paths (10³⁸⁵), adding shift entropy (300 bits), adding branch entropy, the per-op information-loss table, why path explosion and information loss compound rather than substitute, and what the proof does *not* claim. [SPAGHETTIFY.md](SPAGHETTIFY.md) is the engineering deep-dive (state layout, op menu, NUMS provenance, silicon-software unification with PIPE, porting checklist).
+**See [PROOF.md](PROOF.md)** for the step-by-step walkthru: counting the op-selection paths (10³⁸⁵), adding shift entropy (300 bits), adding branch entropy, the per-op information-loss table, why path explosion and information loss compound rather than substitute, and what the proof does *not* claim. [SPAGHETTIFY.md](SPAGHETTIFY.md) is the engineering deep-dive (state layout, op menu, NUMS provenance, silicon-software unification with PIPE, porting checklist).
 
 ### `smear_hash(input: &[u8]) -> [u8; 32]`
 
@@ -67,7 +67,7 @@ identity = spaghettify(system_secret || developer_pubkey || option)
 
 The process doesn't assert its identity. The oracle looks at what the process provably **is** — binary content, signing authority, hardware state — and derives what flows from that nature.
 
-To forge an identity requires either breaking the multi-hash finalizer or navigating ~10^482 paths through the chaos amplifier. There are ~10^80 atoms in the observable universe. The full counting walkthrough lives in [PROOF.md](PROOF.md).
+To forge an identity requires either breaking the multi-hash finalizer or navigating ~10^482 paths thru the chaos amplifier. There are ~10^80 atoms in the observable universe. The full counting walkthru lives in [PROOF.md](PROOF.md).
 
 The math does not care if you trust it.
 

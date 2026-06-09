@@ -49,17 +49,14 @@ const ROUNDS: usize = 17; // Tuned for ~1s on 2025 hardware
 /// # Examples
 ///
 /// ```rust,no_run
-/// use ihi::handle_to_proof;
-/// let public_id = handle_to_proof("fractal decoder");
+/// use ihi::handle_to_proof; let public_id = handle_to_proof("fractal decoder");
 /// ```
 ///
 /// For callers that need to manage the BLAKE3 pre-hash themselves, this lower-level entry point accepts the hash directly. The canonical pipeline for a plaintext handle is [`handle_to_proof`].
 pub fn handle_proof(hash: &blake3::Hash) -> blake3::Hash {
     // Allocate scratch buffer without initialization (for performance)
     let mut scratch = Vec::with_capacity(SIZE);
-    // SAFETY: Buffer is completely filled by Phase 1 and Phase 2 before the final hash.
-    // Phase 1 fills [0..fill_size], Phase 2 fills [fill_size..SIZE].
-    // SIZE is exactly divisible by CHUNK_SIZE (24_873_856 / 32 = 777_308).
+    // SAFETY: Buffer is completely filled by Phase 1 and Phase 2 before the final hash. Phase 1 fills [0..fill_size], Phase 2 fills [fill_size..SIZE]. SIZE is exactly divisible by CHUNK_SIZE (24_873_856 / 32 = 777_308).
     unsafe {
         scratch.set_len(SIZE);
     }
@@ -71,8 +68,7 @@ pub fn handle_proof(hash: &blake3::Hash) -> blake3::Hash {
         let hash_num =
             U256::from_be_bytes(*round_hash.as_bytes()).wrapping_add(U256::from(round as u128));
 
-        // Phase 0: Determine fill size (25-75% of buffer), aligned to CHUNK_SIZE
-        // Alignment ensures Phase 1 fills exactly up to where Phase 2 starts (no gaps)
+        // Phase 0: Determine fill size (25-75% of buffer), aligned to CHUNK_SIZE Alignment ensures Phase 1 fills exactly up to where Phase 2 starts (no gaps)
         let min_fill = SIZE / 4;
         let max_fill = SIZE * 3 / 4;
         let fill_range = max_fill - min_fill;
@@ -80,8 +76,7 @@ pub fn handle_proof(hash: &blake3::Hash) -> blake3::Hash {
             min_fill + ((hash_num % U256::from(fill_range as u128)).as_u128() as usize);
         let fill_size = (fill_size_raw / CHUNK_SIZE) * CHUNK_SIZE; // Align down to 32-byte boundary
 
-        // Phase 1: Sequential hash chain (memory-hard, non-seekable)
-        // Each chunk must be computed in order - no parallelization or seeking possible
+        // Phase 1: Sequential hash chain (memory-hard, non-seekable) Each chunk must be computed in order - no parallelization or seeking possible
         scratch[..CHUNK_SIZE].copy_from_slice(round_hash.as_bytes());
 
         for i in 1..(fill_size / CHUNK_SIZE) {
@@ -100,8 +95,7 @@ pub fn handle_proof(hash: &blake3::Hash) -> blake3::Hash {
                 .copy_from_slice(&hash_num_out.to_be_bytes());
         }
 
-        // Phase 2: Data-dependent random reads (cache-hostile, ASIC-resistant)
-        // Read location depends on previous hash value - unpredictable memory access pattern
+        // Phase 2: Data-dependent random reads (cache-hostile, ASIC-resistant) Read location depends on previous hash value - unpredictable memory access pattern
         let mut curr_start = fill_size;
 
         while curr_start + CHUNK_SIZE <= SIZE {
@@ -128,8 +122,7 @@ pub fn handle_proof(hash: &blake3::Hash) -> blake3::Hash {
             curr_start += CHUNK_SIZE;
         }
 
-        // Advance to next round: output of this round becomes input to next
-        // Forces sequential processing of all 17 rounds
+        // Advance to next round: output of this round becomes input to next Forces sequential processing of all 17 rounds
         round_hash = blake3::hash(&scratch);
     }
 

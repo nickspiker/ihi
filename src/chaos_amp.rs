@@ -17,18 +17,9 @@
 //! ```text
 //! snap = state.clone()
 //!
-//! // Phase 1 — data-dependent op selection
-//! for i in 0..16:
-//!     val       = snap[i]
-//!     op_idx    = val[4:0]                        // 5 bits → 32-op menu
-//!     secondary = snap[(i + 11) & 15]
-//!     tmp[i]    = op_apply(op_idx, val, secondary) ^ ROUND_CONST[round] ^ pos_const(i, round)
+//! // Phase 1 — data-dependent op selection for i in 0..16: val       = snap[i] op_idx    = val[4:0]                        // 5 bits → 32-op menu secondary = snap[(i + 11) & 15] tmp[i]    = op_apply(op_idx, val, secondary) ^ ROUND_CONST[round] ^ pos_const(i, round)
 //!
-//! // Phase 2 — ARX cross-bucket diffusion
-//! for i in 0..16:
-//!     near       = tmp[(i + 1) & 15]
-//!     far_rot    = rotate_left(tmp[(i + 7) & 15], 5)
-//!     state[i]   = (tmp[i] + near + far_rot) & BUCKET_MASK   // 24-bit wrap
+//! // Phase 2 — ARX cross-bucket diffusion for i in 0..16: near       = tmp[(i + 1) & 15] far_rot    = rotate_left(tmp[(i + 7) & 15], 5) state[i]   = (tmp[i] + near + far_rot) & BUCKET_MASK   // 24-bit wrap
 //! ```
 //!
 //! Phase 1 contributes data-dependent path entropy (which op fires depends on the bucket value itself). Phase 2 contributes guaranteed cross-bucket diffusion — every bucket sees changes from positions {i, i+1, i+7, i+11} per round, so a single-bit input flip reaches all 16 buckets within ~5 rounds. We run 16 rounds for margin.

@@ -153,11 +153,7 @@ fn spaghettify_vectors() {
 fn chaos_amp_vectors() {
     // Bit-exact silicon co-verification contract. PIPE's Verilog at /mnt/Octopus/Code/pipe/rtl/chaos_amp_v2.v must produce these exact 48 output bytes for these exact 64 input bytes. Software-silicon byte divergence here is a unification break.
     //
-    // Inputs:
-    //   0: [0u8; 64]                                — catches missing input absorption
-    //   1: [0xFFu8; 64]                             — catches missing input absorption inverse / sign-extension bugs
-    //   2: blake3("alice") repeated to 64 bytes     — typical avalanche case, structured (two halves identical)
-    //   3: blake3("photon") repeated to 64 bytes    — second avalanche case, distinct from (2) to catch input-dependent regressions
+    // Inputs: 0: [0u8; 64]                                — catches missing input absorption 1: [0xFFu8; 64]                             — catches missing input absorption inverse / sign-extension bugs 2: blake3("alice") repeated to 64 bytes     — typical avalanche case, structured (two halves identical) 3: blake3("photon") repeated to 64 bytes    — second avalanche case, distinct from (2) to catch input-dependent regressions
     let mut alice_block = [0u8; 64];
     let alice_h = blake3::hash(b"alice");
     alice_block[..32].copy_from_slice(alice_h.as_bytes());
