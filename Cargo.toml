@@ -1,6 +1,6 @@
 [package]
 name = "ihi"
-version = "0.0.43"
+version = "0.0.44"
 edition = "2021"
 description = "Identity crypto primitives: spaghettify chaos amplifier, smear_hash, handle_proof"
 license = "MIT OR Apache-2.0"
@@ -37,7 +37,7 @@ handle = ["dep:vsf"]
 #
 # Historical note: an earlier version of this crate depended on `spirix` (deterministic floating-point) for the spaghettify chaos layer. That dependency was removed and replaced with `chaos_amp` (pure integer math) precisely because a silent spirix minor-version bump across published ihi versions caused a bifurcated identity namespace — the same handle string resolved to different public IDs depending on which ihi version Cargo happened to pick. ihi has no transitive deps that can drift now. Keep it that way.
 blake3 = { version = "1", default-features = false }
-vsf = { version = "0.3.6", default-features = false, features = ["text-encode"], optional = true }
+vsf = { version = "0.4", default-features = false, features = ["text-encode"], optional = true }
 sha2 = { version = "0.10", default-features = false }
 sha3 = { version = "0.10", default-features = false }
 i256 = { version = "0.2", default-features = false }

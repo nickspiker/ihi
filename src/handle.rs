@@ -134,7 +134,26 @@ pub fn handle_proof(hash: &blake3::Hash) -> blake3::Hash {
 ///
 /// Pipeline position: this is the FIRST half of [`handle_to_proof`]'s computation. The second half is the memory-hard PoW. Calling this directly gives consumers the cheap pre-hash (no PoW; sub-microsecond) for use cases that don't need the anti-squatting cost — e.g. local-only contact-table keys, avatar Ed25519 keypair seeds, message-encryption sub-key derivation.
 ///
-/// The handle string is wrapped in `VsfType::x` and flattened to its canonical binary representation before hashing. This ensures deterministic Unicode handling — the same logical text always produces the same bytes regardless of normalization form, preventing café/café-class identity splits.
+/// ## Canonical form
+///
+/// The handle string is wrapped in `VsfType::x` and flattened to its canonical binary
+/// representation before hashing. As of vsf 0.4.0, that canonicalization includes an explicit
+/// NFC normalization step inside the Huffman encoder, anchored by Unicode's stability policy
+/// (the NFC form of an assigned codepoint is guaranteed not to change across Unicode
+/// versions). The Huffman codebook itself covers all 1,112,064 valid Unicode codepoints, so
+/// future Unicode additions cannot change the encoding of any existing codepoint either.
+///
+/// Concrete consequences:
+/// - `handle_to_hash("café"<U+00E9>) == handle_to_hash("cafe\u{0301}")` — precomposed and
+///   decomposed forms collapse to the same bytes at the encoder boundary.
+/// - `handle_to_hash("Café") != handle_to_hash("café")` — NFC does NOT case-fold.
+/// - Unicode versions added after this crate was published reuse pre-allocated codebook
+///   slots; their handles hash deterministically without code changes here.
+///
+/// **History**: ihi ≤ 0.0.43 inherited a vsf ≤ 0.3.x bug where `VsfType::x` did NOT actually
+/// normalize Unicode despite this comment claiming it did. NFD-form handles hashed
+/// differently from NFC-form handles for the same logical text. Any identity computed by
+/// those versions over NFD-form input is now bifurcated and must be re-attested.
 pub fn handle_to_hash(handle: &str) -> blake3::Hash {
     use alloc::string::ToString;
     use vsf::types::VsfType;
@@ -144,7 +163,9 @@ pub fn handle_to_hash(handle: &str) -> blake3::Hash {
 
 /// Compute the deterministic public ID for a plaintext handle string.
 ///
-/// Pipeline: [`handle_to_hash`] → [`handle_proof`]. The handle is wrapped in `VsfType::x` and flattened to canonical binary form before BLAKE3 hashing, ensuring deterministic Unicode handling. The resulting hash is then fed through the memory-hard PoW.
+/// Pipeline: [`handle_to_hash`] → [`handle_proof`]. The handle is NFC-normalized and Huffman-
+/// encoded by `VsfType::x`, BLAKE3-hashed, then fed through the memory-hard PoW. See
+/// [`handle_to_hash`] for the full canonicalization contract.
 ///
 /// Returns the 32-byte proof. Use [`proof_to_filename`] to convert to a base64url filename for capsule storage.
 ///

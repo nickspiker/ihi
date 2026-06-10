@@ -10,8 +10,10 @@ This crate computes exactly that.
 
 ```toml
 [dependencies]
-ihi = "0.0.42"
+ihi = "0.0.44"
 ```
+
+> **Pre-1.0 stability:** Until `0.1.0`, the algorithms themselves (spaghettify, the handle-proof PoW, the provable-destruction construction) may still see breaking changes. These are very new ideas and the byte-level contract is not yet frozen — every 0.0.x release is permitted to alter test vectors. The determinism guarantees below apply *within* a given version, not across them. Pin exact versions if you publish identities you intend to verify later.
 
 ---
 
@@ -78,6 +80,17 @@ The math does not care if you trust it.
 ihi has **zero non-deterministic transitive dependencies**, by construction. Every byte of every output comes from pure integer arithmetic over fixed-width types. No floating point. No platform-defined behavior. No `#[cfg(target_*)]` branches that change output bytes.
 
 `tests/test_vectors.rs` locks the byte output of every public function on a diverse set of inputs. Any future change to ihi, its dependencies, or rustc that alters output bytes will fail the test immediately and loudly. Cross-implementation ports (C, JS, future hardware) must reproduce these exact bytes.
+
+### Text canonicalization
+
+Handle strings are canonicalized through two stacked anchors before they ever reach BLAKE3:
+
+1. **NFC normalization**, performed inside vsf 0.4.0+'s `VsfType::x` Huffman encoder. Anchored by Unicode's stability policy: once a codepoint is assigned, its NFC form is guaranteed not to change across Unicode versions.
+2. **Huffman encoding over the full 1,112,064-codepoint codespace** (0x000000–0x10FFFF minus the U+D800–U+DFFF surrogate range). Every valid codepoint has a pre-assigned code in the frozen codebook. Yearly Unicode codepoint additions do not change the encoding of any existing character because every slot is already reserved. The codebook file is vendored in the vsf repo and integrity-checked by BLAKE3 at build time.
+
+Together this means `handle_to_proof("café")` and `handle_to_proof("cafe\u{0301}")` produce the same 32-byte proof. Any change to either anchor would invalidate every published identity and trigger a MAJOR version bump per the rules in `Cargo.toml`.
+
+> **History**: ihi ≤ 0.0.43 inherited a vsf ≤ 0.3.x bug where the Huffman encoder did NOT actually perform NFC normalization despite the documentation claiming so. NFD-form handles hashed differently from NFC-form handles for the same logical text. ihi 0.0.44 + vsf 0.4.0 fix this at the source. Identities computed by earlier versions over NFD-form input are bifurcated and must be re-attested.
 
 ---
 
