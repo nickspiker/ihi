@@ -1,6 +1,6 @@
 [package]
 name = "ihi"
-version = "0.0.44"
+version = "0.0.45"
 edition = "2021"
 description = "Identity crypto primitives: spaghettify chaos amplifier, smear_hash, handle_proof"
 license = "MIT OR Apache-2.0"
@@ -37,7 +37,8 @@ handle = ["dep:vsf"]
 #
 # Historical note: an earlier version of this crate depended on `spirix` (deterministic floating-point) for the spaghettify chaos layer. That dependency was removed and replaced with `chaos_amp` (pure integer math) precisely because a silent spirix minor-version bump across published ihi versions caused a bifurcated identity namespace — the same handle string resolved to different public IDs depending on which ihi version Cargo happened to pick. ihi has no transitive deps that can drift now. Keep it that way.
 blake3 = { version = "1", default-features = false }
-vsf = { version = "0.4", default-features = false, features = ["text-encode"], optional = true }
+# vsf "0.6" is the FROZEN ENCODER LANE — published specifically for this pin (byte-identical to vsf 0.8.0 at the time of freezing). The x text encoder (NFC + full-codespace Huffman) behind handle_to_hash can never move underneath identity derivation while vsf's main lane iterates. Pinning the main lane instead would also recreate the vsf↔ihi cycle for vsf's handle feature. Do not bump this to a main-lane version; lane changes (0.6.43+) happen only as coordinated encoder emergencies.
+vsf = { version = "0.6", default-features = false, features = ["text-encode"], optional = true }
 sha2 = { version = "0.10", default-features = false }
 sha3 = { version = "0.10", default-features = false }
 i256 = { version = "0.2", default-features = false }

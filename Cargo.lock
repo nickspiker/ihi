@@ -222,7 +222,7 @@ dependencies = [
 
 [[package]]
 name = "ihi"
-version = "0.0.44"
+version = "0.0.45"
 dependencies = [
  "blake3",
  "i256",
@@ -424,9 +424,9 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
 name = "vsf"
-version = "0.4.0"
+version = "0.6.42"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "066375dd69da43eeaca40306281a009e0c015594781861a163dcb7aaf721ce90"
+checksum = "4c5d0a40ee257e3d1c771570668208f2daa233eab0c91badf84d00132b0218bb"
 dependencies = [
  "bitvec",
  "blake3",

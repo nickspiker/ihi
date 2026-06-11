@@ -279,3 +279,24 @@ fn handle_to_proof_differs_for_byte_neighbors() {
         "weak avalanche: only {hamming} bits differ between 'alice' and 'alicE'"
     );
 }
+
+#[test]
+fn octopus_cross_system_pin() {
+    // The fgtw seed network bakes these exact bytes as compile-time constants — OCTOPUS_PROVENANCE and OCTOPUS_FILENAME in fgtw/src/octopus_capsule.rs — and browsers independently recompute the same proof to request the admin capsule path. If this test fails, ihi's identity pipeline has drifted and the seed network's address space has silently forked. Computed under ihi 0.0.45 + vsf 0.6.42 (the frozen encoder lane); must never change while the v8 x wire format stands.
+    let proof = handle_to_proof("octopus");
+    assert_eq!(
+        proof.as_bytes(),
+        &[
+            0xe0, 0x67, 0x0e, 0xb8, 0x76, 0x84, 0xcc, 0x4b,
+            0x94, 0x43, 0xd8, 0xf1, 0xe4, 0x32, 0x5f, 0xce,
+            0x59, 0x0d, 0x04, 0xc8, 0x3c, 0xc5, 0x61, 0x86,
+            0x4d, 0x26, 0xad, 0xa1, 0x95, 0xaf, 0x00, 0xd8,
+        ],
+        "handle_to_proof(\"octopus\") drifted — fgtw OCTOPUS_PROVENANCE no longer matches"
+    );
+    assert_eq!(
+        proof_to_filename(&proof),
+        "4GcOuHaEzEuUQ9jx5DJfzlkNBMg8xWGGTSatoZWvANg.vsf",
+        "octopus filename drifted — fgtw OCTOPUS_FILENAME no longer matches"
+    );
+}
