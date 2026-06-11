@@ -281,22 +281,22 @@ fn handle_to_proof_differs_for_byte_neighbors() {
 }
 
 #[test]
-fn octopus_cross_system_pin() {
-    // The fgtw seed network bakes these exact bytes as compile-time constants — OCTOPUS_PROVENANCE and OCTOPUS_FILENAME in fgtw/src/octopus_capsule.rs — and browsers independently recompute the same proof to request the admin capsule path. If this test fails, ihi's identity pipeline has drifted and the seed network's address space has silently forked. Computed under ihi 0.0.45 + vsf 0.6.42 (the frozen encoder lane); must never change while the v8 x wire format stands.
-    let proof = handle_to_proof("octopus");
+fn motuhake_pipeline_pin() {
+    // Canonical end-to-end pipeline freeze: handle string → VsfType::x (NFC + Huffman) → BLAKE3 → memory-hard proof → base64url filename, pinned at every stage's output. "motuhake" (Māori: separate, independent — as in mana motuhake, self-determination) is the permanent frozen vector for the identity pipeline. Computed under ihi 0.0.45 + vsf 0.6.42 (the frozen encoder lane); must never change while the v8 x wire format stands. Downstream systems that bake derived constants (capsule filenames, provenance bytes) inherit exactly this pipeline — if this test fails, every such constant in the ecosystem has silently forked.
+    let proof = handle_to_proof("motuhake");
     assert_eq!(
         proof.as_bytes(),
         &[
-            0xe0, 0x67, 0x0e, 0xb8, 0x76, 0x84, 0xcc, 0x4b,
-            0x94, 0x43, 0xd8, 0xf1, 0xe4, 0x32, 0x5f, 0xce,
-            0x59, 0x0d, 0x04, 0xc8, 0x3c, 0xc5, 0x61, 0x86,
-            0x4d, 0x26, 0xad, 0xa1, 0x95, 0xaf, 0x00, 0xd8,
+            0x64, 0x7e, 0xc3, 0x0d, 0x7d, 0x15, 0x4d, 0x40,
+            0x07, 0xaa, 0xc0, 0x67, 0x64, 0x55, 0x97, 0x8b,
+            0xac, 0x0b, 0xe7, 0x0c, 0xdd, 0xee, 0xc4, 0xd0,
+            0x19, 0x05, 0x03, 0xca, 0x4c, 0xda, 0xf6, 0x43,
         ],
-        "handle_to_proof(\"octopus\") drifted — fgtw OCTOPUS_PROVENANCE no longer matches"
+        "handle_to_proof(\"motuhake\") drifted — the identity pipeline is no longer byte-stable"
     );
     assert_eq!(
         proof_to_filename(&proof),
-        "4GcOuHaEzEuUQ9jx5DJfzlkNBMg8xWGGTSatoZWvANg.vsf",
-        "octopus filename drifted — fgtw OCTOPUS_FILENAME no longer matches"
+        "ZH7DDX0VTUAHqsBnZFWXi6wL5wzd7sTQGQUDykza9kM.vsf",
+        "motuhake filename drifted — proof_to_filename is no longer byte-stable"
     );
 }
