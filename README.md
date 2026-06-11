@@ -83,7 +83,7 @@ ihi has **zero non-deterministic transitive dependencies**, by construction. Eve
 
 ### Text canonicalization
 
-Handle strings are canonicalized through two stacked anchors before they ever reach BLAKE3:
+Handle strings are canonicalized thru two stacked anchors before they ever reach BLAKE3:
 
 1. **NFC normalization**, performed inside vsf 0.4.0+'s `VsfType::x` Huffman encoder. Anchored by Unicode's stability policy: once a codepoint is assigned, its NFC form is guaranteed not to change across Unicode versions.
 2. **Huffman encoding over the full 1,112,064-codepoint codespace** (0x000000–0x10FFFF minus the U+D800–U+DFFF surrogate range). Every valid codepoint has a pre-assigned code in the frozen codebook. Yearly Unicode codepoint additions do not change the encoding of any existing character because every slot is already reserved. The codebook file is vendored in the vsf repo and integrity-checked by BLAKE3 at build time.
