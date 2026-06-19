@@ -164,7 +164,7 @@ pub fn handle_to_hash(handle: &str) -> blake3::Hash {
 /// Compute the deterministic public ID for a plaintext handle string.
 ///
 /// Pipeline: [`handle_to_hash`] → [`handle_proof`]. The handle is NFC-normalized and Huffman-
-/// encoded by `VsfType::x`, BLAKE3-hashed, then fed through the memory-hard PoW. See
+/// encoded by `VsfType::x`, BLAKE3-hashed, then fed thru the memory-hard PoW. See
 /// [`handle_to_hash`] for the full canonicalization contract.
 ///
 /// Returns the 32-byte proof. Use [`proof_to_filename`] to convert to a base64url filename for capsule storage.

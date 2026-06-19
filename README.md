@@ -100,6 +100,12 @@ Fully `no_std`. Suitable for bare-metal kernels, embedded targets, and constrain
 
 ---
 
+## Terminology
+
+*ihi* — the outwardly-perceptible quality of *mana*, the verifiable presence others recognise — is the whole stack's word for a provable identity, not just this crate's name. ferros's process oracle produces an *ihi*; PIPE's silicon attests one; here `handle_proof` is the **handle-layer *ihi***: `spaghettify(BLAKE3(NFC(handle)))`, the public identity derived from a private handle. Full cross-stack glossary: `GLOSSARY.md` in the ferros repo.
+
+---
+
 ## License
 
 MIT OR Apache-2.0

@@ -68,7 +68,7 @@
 //! - **Op selection** dominates: 5 bits × 16 buckets × 16 rounds = **1280 bits ≈ 10³⁸⁵** distinct op-sequences
 //! - **Shift/rotate amounts** (in ~10 of 32 ops): 4 extra bits × ~30% incidence × 256 op-applications ≈ **300 bits**
 //! - **Branch entropy** (CSWAP): 1 bit × ~3% incidence × 256 op-applications ≈ **8 bits** (small but real)
-//! - **Combined**: ~**1600 bits ≈ 10⁴⁸²** total paths through one chaos_amp evaluation
+//! - **Combined**: ~**1600 bits ≈ 10⁴⁸²** total paths thru one chaos_amp evaluation
 //!
 //! For comparison: ~10⁸⁰ atoms in the observable universe. Even the op-selection minimum (10³⁸⁵) exceeds that by 10³⁰⁵.
 //!

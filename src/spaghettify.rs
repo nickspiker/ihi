@@ -8,7 +8,7 @@ use crate::smear::smear_hash_parts;
 /// # Pipeline
 ///
 /// 1. **BLAKE3 XOF absorb**: `blake3_xof(input)` → 64 bytes. Any input length compresses deterministically to the 64-byte block `chaos_amp` consumes. BLAKE3's extendable-output mode is bit-stable across versions and platforms.
-/// 2. **chaos_amp**: 64 bytes → 48 bytes through 16 buckets × 16 rounds of the 32-op data-dependent ALU. See [`crate::chaos_amp`] for the path-entropy argument (~10^482 paths) and the lossy-op information-destruction bound.
+/// 2. **chaos_amp**: 64 bytes → 48 bytes thru 16 buckets × 16 rounds of the 32-op data-dependent ALU. See [`crate::chaos_amp`] for the path-entropy argument (~10^482 paths) and the lossy-op information-destruction bound.
 /// 3. **Defense-in-depth finalize**: `smear_hash(chaos_state || original_input)` → 32 bytes. XORs BLAKE3 ⊕ SHA3-256 ⊕ SHA-512; the original input bytes are re-mixed in so the output remains cryptographically strong even if the chaos layer has unknown weaknesses. Output is secure if ANY one of {chaos_amp, BLAKE3, SHA3-256, SHA-512} survives cryptanalysis.
 ///
 /// # Irreversibility
@@ -16,7 +16,7 @@ use crate::smear::smear_hash_parts;
 /// Given output O, finding input I such that `spaghettify(I) = O` requires either:
 ///
 /// - Inverting `smear_hash` over (chaos_state || input) — must simultaneously invert BLAKE3, SHA3-256, AND SHA-512, OR
-/// - Inverting BLAKE3-XOF AND navigating ~10^482 op-selection paths through `chaos_amp`
+/// - Inverting BLAKE3-XOF AND navigating ~10^482 op-selection paths thru `chaos_amp`
 ///
 /// For comparison: ~10^80 atoms in the observable universe. The function is preimage-resistant by construction; collisions exist by the pigeonhole principle (the lossy ops destroy ~700-2500 cumulative bits per call) but cannot be navigated to.
 ///
