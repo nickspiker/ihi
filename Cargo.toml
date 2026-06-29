@@ -1,6 +1,6 @@
 [package]
 name = "ihi"
-version = "0.0.47"
+version = "0.0.48"
 edition = "2021"
 description = "Identity crypto primitives: spaghettify chaos amplifier, smear_hash, handle_proof"
 license = "MIT OR Apache-2.0"
@@ -9,9 +9,13 @@ keywords = ["cryptography", "hash", "no-std", "identity"]
 categories = ["cryptography", "no-std"]
 
 [features]
-default = ["handle"]
+default = ["handle", "keyring"]
 # handle_proof requires alloc — disable for bare-metal targets
 handle = ["dep:vsf"]
+# keyring: the constant-size device-set commitment (Merkle root + inclusion proofs over spaghettify leaves).
+# Pure blake3 + spaghettify, but the tree fold uses alloc for the level buffers, so it requires alloc the way
+# `handle` does. Available WITHOUT `handle` so fgtw (default-features = false) can verify proofs.
+keyring = []
 
 [dependencies]
 # CRYPTOGRAPHY (n.): the design of mathematical protocols whose security properties — confidentiality, integrity, authenticity, identity, non-repudiation — must hold against any adversary with full knowledge of the protocol's specification. For hash-based identity primitives like `handle_proof`, `smear_hash`, `spaghettify`, and `chaos_amp` there is NO secret — security reduces entirely to the function being a fixed, total, deterministic map from input bytes to output bytes that every party — today, tomorrow, a billion years from now, on every architecture — computes identically.

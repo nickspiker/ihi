@@ -1,11 +1,13 @@
 #![no_std]
 
-#[cfg(feature = "handle")]
+#[cfg(any(feature = "handle", feature = "keyring"))]
 extern crate alloc;
 
 mod chaos_amp;
 #[cfg(feature = "handle")]
 mod handle;
+#[cfg(feature = "keyring")]
+pub mod keyring;
 mod smear;
 mod spaghettify;
 
