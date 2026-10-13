@@ -21,7 +21,7 @@ ihi = "0.0.44"
 
 ### `chaos_amp(input: &[u8; 64]) -> [u8; 48]`
 
-The core mixing primitive. **Bit-exact with PIPE's silicon Verilog** (`/mnt/Octopus/Code/pipe/rtl/chaos_amp_v2.v`) — same algorithm, two implementations (software + FPGA), one byte-level contract. Pure integer arithmetic; zero floating point; zero transitive dependencies that can drift.
+The core mixing primitive. **Bit-exact with PIPE's silicon Verilog** (`/mnt/Harbor/Code/PIPE/rtl/chaos_amp_v2.v`) — same algorithm, two implementations (software + FPGA), one byte-level contract. Pure integer arithmetic; zero floating point; zero transitive dependencies that can drift.
 
 16 buckets × 24 bits each (384-bit state). 16 rounds. Each round is two phases: data-dependent op-selection (a 32-op ALU menu picked per bucket from `val[4:0]`) followed by ARX cross-bucket diffusion. Full avalanche over the state in ~5-8 rounds; 16 rounds for margin.
 

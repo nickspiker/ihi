@@ -3,7 +3,7 @@ use crate::smear::smear_hash_parts;
 
 /// Spaghettify — arbitrary-length input → 32-byte mixed output.
 ///
-/// Thin wrapper over [`chaos_amp`] that absorbs arbitrary input length and finalizes with defense-in-depth multi-hash mixing. The mixing core ([`chaos_amp`]) is bit-exact with PIPE's silicon Verilog ([`/mnt/Octopus/Code/pipe/rtl/chaos_amp_v2.v`]); the wrapper structure is pure software.
+/// Thin wrapper over [`chaos_amp`] that absorbs arbitrary input length and finalizes with defense-in-depth multi-hash mixing. The mixing core ([`chaos_amp`]) is bit-exact with PIPE's silicon Verilog (`/mnt/Harbor/Code/PIPE/rtl/chaos_amp_v2.v`); the wrapper structure is pure software.
 ///
 /// # Pipeline
 ///
@@ -18,7 +18,11 @@ use crate::smear::smear_hash_parts;
 /// - Inverting `smear_hash` over (chaos_state || input) — must simultaneously invert BLAKE3, SHA3-256, AND SHA-512, OR
 /// - Inverting BLAKE3-XOF AND navigating ~10^482 op-selection paths thru `chaos_amp`
 ///
-/// For comparison: ~10^80 atoms in the observable universe. The function is preimage-resistant by construction; collisions exist by the pigeonhole principle (the lossy ops destroy ~700-2500 cumulative bits per call) but cannot be navigated to.
+/// For comparison: ~10^80 atoms in the observable universe. The function is preimage-resistant by construction.
+///
+/// # Collisions
+///
+/// The chaos stage is deliberately lossy (~700-2500 bits destroyed per call), so it collides internally; that is harmless because the original input is re-fed to the finalizer. An output collision needs the three-hash finalizer to coincide on two self-consistent `chaos_state || input` strings, and breaking individual component hashes does not produce such strings (a free preimage is self-consistent with probability ~2^-384). The cost is the generic birthday bound of a 256-bit output, 2^128, the same as SHA3-256's: conjectured, as for every practical hash. See SPAGHETTIFY.md §5.3.
 ///
 /// # Determinism
 ///

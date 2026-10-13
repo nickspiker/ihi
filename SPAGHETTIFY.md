@@ -8,11 +8,11 @@ The canonical engineering reference for ihi's chaos mixing primitive — its alg
 
 `spaghettify(input: &[u8]) -> [u8; 32]` is a deterministic one-way function whose hardness is **auditable by inspection** rather than conjectured. You can count the paths yourself, count the bits destroyed, and verify the NUMS constants from their BLAKE3 seed strings — no "we believe X is hard" required.
 
-Its inner core, `chaos_amp(input: &[u8; 64]) -> [u8; 48]`, is **bit-exact** with the Verilog at `/mnt/Octopus/Code/pipe/rtl/chaos_amp_v2.v`. Same algorithm, two implementations (software + FPGA), one byte-level contract. Bytes from the software call equal bytes from the silicon call for the same input. That equality is enforced by the test vectors in `tests/test_vectors.rs::chaos_amp_vectors`.
+Its inner core, `chaos_amp(input: &[u8; 64]) -> [u8; 48]`, is **bit-exact** with the Verilog at `/mnt/Harbor/Code/PIPE/rtl/chaos_amp_v2.v`. Same algorithm, two implementations (software + FPGA), one byte-level contract. Bytes from the software call equal bytes from the silicon call for the same input. That equality is enforced by the test vectors in `tests/test_vectors.rs::chaos_amp_vectors`.
 
 ## 2. What it isn't
 
-- **Not a standard cryptographic hash** — it is not collision-resistant in the way SHA-3 is (collisions are guaranteed to exist by pigeonhole; the security argument is that they are intractable to navigate to, not that they don't exist).
+- **Not unconditionally collision-resistant, and neither is any practical hash.** Collisions exist for every function with a 32-byte output, SHA3-256 included; what matters is the cost of finding one. For spaghettify that is the generic birthday bound, 2¹²⁸, with no known structural shortcut (§5.3). What it lacks next to SHA-3 is years of outside cryptanalysis, not a weaker claim.
 - **Not memory-hard** — it is preimage-resistant via path explosion and information loss, not via memory cost. For memory-hardness see `handle_proof` (~24 MB sequential PoW).
 - **Not a substitute for AEAD or signatures** — it's a one-way mixing function for identity derivation, not for message authentication or confidentiality.
 
@@ -184,6 +184,18 @@ Why XOF instead of a fixed-size BLAKE3 digest? XOF mode produces deterministic 6
 
 Output security holds if **any one** of {chaos_amp, BLAKE3, SHA3-256, SHA-512} survives cryptanalysis.
 
+### 5.3 Collision resistance
+
+A collision is two inputs `x ≠ y` with `spaghettify(x) = spaghettify(y)`. The attacker has exactly one degree of freedom, the input: all three finalizer hashes are fed `chaos_state ‖ input`, and `chaos_state = chaos_amp(BLAKE3-XOF(input))` is itself a function of that input. Every string the finalizer ever sees is **self-consistent**: its first 48 bytes are the chaos state of the rest.
+
+That binding is what defeats the usual objection to XOR-combining hashes. The constructions showing that an XOR of hashes can lose collision resistance all feed the combiner arbitrary inputs; spaghettify's combiner never receives one. Breaking components does not compose:
+
+- **Preimage oracles for SHA3-256 and SHA-512** return strings with chosen outputs, but a free preimage is self-consistent with probability about 2⁻³⁸⁴ (its first 48 bytes would have to equal `chaos_amp(BLAKE3-XOF(rest))`). The oracles produce strings no real input generates.
+- **A BLAKE3-XOF collision** (two inputs with the same absorbed 64-byte block) gives the same chaos state, but the two inputs still differ, and the full three-way finalizer must still coincide on them.
+- **chaos_amp's own collisions** are common by design: the lossy ops destroy ~700–2500 bits per call. They are harmless for the same reason: the original input reaches the finalizer directly.
+
+So the cost of a collision is the generic birthday bound of a 256-bit output, 2¹²⁸, the same as SHA3-256's. Like SHA-3's, that is conjectured rather than proven; unlike SHA-3's, it has not yet been tested by outside cryptanalysis, and attempts are welcome. It makes spaghettify suitable for commitments and Merkle trees as well as identity derivation (FGTW's pulse uses it for its tree nodes).
+
 ---
 
 ## 6. Security argument (summary)
@@ -203,8 +215,8 @@ These two arguments are independent and compound multiplicatively. The defense-i
 
 chaos_amp exists in two implementations:
 
-- **Software**: `/mnt/Octopus/Code/ihi/src/chaos_amp.rs`
-- **Silicon**: `/mnt/Octopus/Code/pipe/rtl/chaos_amp_v2.v` (and the silicon synthesis path thru `top_pipe_silicon.v`)
+- **Software**: `/mnt/Harbor/Code/ihi/src/chaos_amp.rs`
+- **Silicon**: `/mnt/Harbor/Code/PIPE/rtl/chaos_amp_v2.v` (and the silicon synthesis path thru `top_pipe_silicon.v`)
 
 These are not "similar" or "equivalent in spirit" — they are **bit-exact**. The same 64-byte input produces the same 48-byte (384-bit) output from both implementations, byte-for-byte. The contract is enforced by:
 
@@ -320,5 +332,5 @@ The bifurcation incident is the entire reason `chaos_amp` exists as ihi's core m
 - [src/spaghettify.rs](src/spaghettify.rs) — wrapper implementation
 - [tests/test_vectors.rs](tests/test_vectors.rs) — byte-level conformance contract
 - [examples/gen_test_vectors.rs](examples/gen_test_vectors.rs) — regenerate vectors when intentional algorithm changes happen
-- [/mnt/Octopus/Code/pipe/rtl/chaos_amp_v2.v](../pipe/rtl/chaos_amp_v2.v) — silicon implementation (the other half of the bit-exact unification)
-- [/mnt/Octopus/Code/pipe/PROTOCOL.md](../pipe/PROTOCOL.md) — PIPE protocol context for how chaos_amp is used downstream
+- [/mnt/Harbor/Code/PIPE/rtl/chaos_amp_v2.v](../PIPE/rtl/chaos_amp_v2.v) — silicon implementation (the other half of the bit-exact unification)
+- [/mnt/Harbor/Code/PIPE/PROTOCOL.md](../PIPE/PROTOCOL.md) — PIPE protocol context for how chaos_amp is used downstream

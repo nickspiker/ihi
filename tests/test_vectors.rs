@@ -6,7 +6,7 @@
 //!
 //! Vectors remain valid for ihi 0.0.44 + vsf 0.4.0 (the NFC fix): the test inputs that contain non-ASCII characters (café, 中文, 🚀) all happen to be NFC-form in this source file, and NFC normalization is a no-op on already-NFC input. The fix is observable in the new `*_nfc_nfd_equivalence_*` tests that explicitly compare NFC vs NFD input variants of the same logical text — those would fail loudly on any pre-0.4.0 vsf.
 //!
-//! `chaos_amp` test vectors additionally serve as the silicon co-verification contract — PIPE's Verilog at `/mnt/Octopus/Code/pipe/rtl/chaos_amp_v2.v` must produce these exact 48 output bytes for these exact 64 input bytes. Software-silicon byte divergence anywhere here is a unification break.
+//! `chaos_amp` test vectors additionally serve as the silicon co-verification contract — PIPE's Verilog at `/mnt/Harbor/Code/PIPE/rtl/chaos_amp_v2.v` must produce these exact 48 output bytes for these exact 64 input bytes. Software-silicon byte divergence anywhere here is a unification break.
 //!
 //! Diversity rationale: tests cover (a) the empty input edge case, (b) single bytes at both extremes (0x00 and 0xFF) to catch alignment / boundary bugs, (c) typical short and longer inputs, (d) UTF-8 multi-byte sequences (accented Latin, CJK, emoji) for unicode-byte handling, (e) inputs that start with the old VSF type marker bytes (`l`, `x`, `a`) to confirm the proof is byte-independent of any prior VSF-encoded path, and (f) repeating-byte patterns to catch collision-resistance regressions.
 //!
@@ -153,7 +153,7 @@ fn spaghettify_vectors() {
 
 #[test]
 fn chaos_amp_vectors() {
-    // Bit-exact silicon co-verification contract. PIPE's Verilog at /mnt/Octopus/Code/pipe/rtl/chaos_amp_v2.v must produce these exact 48 output bytes for these exact 64 input bytes. Software-silicon byte divergence here is a unification break.
+    // Bit-exact silicon co-verification contract. PIPE's Verilog at /mnt/Harbor/Code/PIPE/rtl/chaos_amp_v2.v must produce these exact 48 output bytes for these exact 64 input bytes. Software-silicon byte divergence here is a unification break.
     //
     // Inputs: 0: [0u8; 64]                                — catches missing input absorption 1: [0xFFu8; 64]                             — catches missing input absorption inverse / sign-extension bugs 2: blake3("alice") repeated to 64 bytes     — typical avalanche case, structured (two halves identical) 3: blake3("photon") repeated to 64 bytes    — second avalanche case, distinct from (2) to catch input-dependent regressions
     let mut alice_block = [0u8; 64];

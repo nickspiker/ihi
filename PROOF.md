@@ -288,7 +288,7 @@ Honesty matters. The proof above shows:
 
 It does NOT show:
 
-✗ **Collision resistance from below.** Collisions exist by pigeonhole (256-bit output, unbounded input). The path-explosion argument bounds the cost of finding them, but doesn't prove no efficient algorithm exists.
+✗ **Collision resistance, unconditionally.** No practical hash has that, SHA-3 included. The bound here is the generic 2¹²⁸ birthday cost of a 256-bit output, with the structural argument in [SPAGHETTIFY.md §5.3](SPAGHETTIFY.md#53-collision-resistance) that breaking component hashes does not compose into a collision. Like SHA-3's, it is conjectured; unlike SHA-3's, it has not yet had outside cryptanalysis.
 ✗ **Indistinguishability from random.** The avalanche tests in `tests/test_vectors.rs` smoke-test this empirically but make no formal claim.
 ✗ **Side-channel resistance.** CSWAP's branch is data-dependent and leaks via timing.
 ✗ **Memory hardness.** For that, use `handle_proof`.
@@ -340,4 +340,4 @@ If your count differs from this document, please file an issue at the repository
 - [SPAGHETTIFY.md](SPAGHETTIFY.md) — the engineering spec for the algorithm
 - [src/chaos_amp.rs](src/chaos_amp.rs) — the implementation being analyzed
 - [tests/test_vectors.rs](tests/test_vectors.rs) — byte-level conformance contract
-- [/mnt/Octopus/Code/pipe/rtl/chaos_amp_v2.v](../pipe/rtl/chaos_amp_v2.v) — silicon implementation (bit-exact equivalent)
+- [/mnt/Harbor/Code/PIPE/rtl/chaos_amp_v2.v](../PIPE/rtl/chaos_amp_v2.v) — silicon implementation (bit-exact equivalent)

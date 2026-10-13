@@ -1,6 +1,6 @@
 //! Chaos amplifier — the core mixing primitive shared between ihi (software) and PIPE (silicon).
 //!
-//! Pure integer math, zero floating point, zero transitive deps that can drift. The bit-level contract is defined here in software and mirrored bit-exactly in [`/mnt/Octopus/Code/pipe/rtl/chaos_amp_v2.v`](Verilog). Any change here changes silicon; any change in silicon changes here; the two are one design split across two implementations.
+//! Pure integer math, zero floating point, zero transitive deps that can drift. The bit-level contract is defined here in software and mirrored bit-exactly in the Verilog at `/mnt/Harbor/Code/PIPE/rtl/chaos_amp_v2.v`. Any change here changes silicon; any change in silicon changes here; the two are one design split across two implementations.
 //!
 //! # State layout
 //!
@@ -293,7 +293,7 @@ fn state_to_bytes(state: &ChaosState) -> [u8; 48] {
 
 /// Run the full chaos amplifier over a 64-byte input and return 48 bytes of mixed state.
 ///
-/// This is the canonical mixing primitive — bit-exact with [`/mnt/Octopus/Code/pipe/rtl/chaos_amp_v2.v`](PIPE silicon). For arbitrary-length input, see [`crate::spaghettify`] which wraps this with BLAKE3-XOF absorption and a defense-in-depth output finalizer.
+/// This is the canonical mixing primitive — bit-exact with PIPE silicon (`/mnt/Harbor/Code/PIPE/rtl/chaos_amp_v2.v`). For arbitrary-length input, see [`crate::spaghettify`] which wraps this with BLAKE3-XOF absorption and a defense-in-depth output finalizer.
 ///
 /// # Determinism
 ///
