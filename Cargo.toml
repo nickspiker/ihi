@@ -22,7 +22,7 @@ keyring = []
 #
 # ─── ZERO NON-DETERMINISTIC DEPENDENCIES — BY CONSTRUCTION ───
 #
-# Every byte of every output from this crate is computed by pure integer arithmetic over fixed-width types (u8/u16/u32/u64/i8/i16, plus i256's U256). No floating point. No allocation-order-dependent state. No platform-defined behavior. No `#[cfg(target_*)]` branches. The chaos amplifier (`chaos_amp`) is bit-exact with PIPE's silicon Verilog at `/mnt/Octopus/Code/pipe/rtl/chaos_amp_v2.v` — same algorithm, two implementations, one byte-level contract.
+# Every byte of every output from this crate is computed by pure integer arithmetic over fixed-width types (u8/u16/u32/u64/i8/i16, plus i256's U256). No floating point. No allocation-order-dependent state. No platform-defined behavior. No `#[cfg(target_*)]` branches. The chaos amplifier (`chaos_amp`) is bit-exact with PIPE's silicon Verilog at `/mnt/Harbor/Code/pipe/rtl/chaos_amp_v2.v` — same algorithm, two implementations, one byte-level contract.
 #
 # The transitive dependency surface below is deliberately and PERMANENTLY restricted to:
 #   - blake3, sha2, sha3: cryptographic hash functions with frozen wire formats. Their output bytes are specified at the bit level by their respective standards (RFC 9381, FIPS 180-4, FIPS 202). A patch-version bump may change implementation details (SIMD lanes, lookup tables) but CANNOT change output bytes without breaking the published standard.
