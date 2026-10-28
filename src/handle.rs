@@ -144,6 +144,7 @@ pub fn handle_proof(hash: &blake3::Hash) -> blake3::Hash {
 /// - Unicode versions added after this crate was published reuse pre-allocated codebook slots; their handles hash deterministically without code changes here.
 ///
 /// **History**: ihi ≤ 0.0.43 inherited a vsf ≤ 0.3.x bug where `VsfType::x` did NOT actually normalize Unicode despite this comment claiming it did. NFD-form handles hashed differently from NFC-form handles for the same logical text. Any identity computed by those versions over NFD-form input is now bifurcated and must be re-attested.
+#[cfg(feature = "handle")]
 pub fn handle_to_hash(handle: &str) -> blake3::Hash {
     use alloc::string::ToString;
     use vsf::types::VsfType;
@@ -158,6 +159,7 @@ pub fn handle_to_hash(handle: &str) -> blake3::Hash {
 /// Returns the 32-byte proof. Use [`proof_to_filename`] to convert to a base64url filename for capsule storage.
 ///
 /// This is the canonical entry point — every component in the stack (photon, vsf::handle, toka, fgtw) should call this rather than rolling its own pre-hash step.
+#[cfg(feature = "handle")]
 pub fn handle_to_proof(handle: &str) -> blake3::Hash {
     handle_proof(&handle_to_hash(handle))
 }
@@ -165,6 +167,7 @@ pub fn handle_to_proof(handle: &str) -> blake3::Hash {
 /// Encode a handle proof as a base64url filename with `.vsf` extension.
 ///
 /// Uses the RFC 4648 base64url alphabet (A-Z, a-z, 0-9, `-`, `_`) for filesystem and URL safety; no padding (the proof is exactly 32 bytes → 43 base64url chars, no ambiguity). Suffixed with `.vsf` so the filename is self-describing as a VSF capsule.
+#[cfg(feature = "handle")]
 pub fn proof_to_filename(proof: &blake3::Hash) -> alloc::string::String {
     use alloc::string::String;
     const ALPHABET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
@@ -196,6 +199,7 @@ pub fn proof_to_filename(proof: &blake3::Hash) -> alloc::string::String {
 }
 
 /// Convenience shortcut: handle string → base64url `.vsf` filename. Equivalent to `proof_to_filename(&handle_to_proof(handle))`. Runs the ~1s memory-hard proof; reuse the [`blake3::Hash`] from [`handle_to_proof`] across multiple filename derivations rather than calling this in a loop.
+#[cfg(feature = "handle")]
 pub fn handle_to_filename(handle: &str) -> alloc::string::String {
     proof_to_filename(&handle_to_proof(handle))
 }

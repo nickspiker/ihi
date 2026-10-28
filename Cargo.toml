@@ -10,8 +10,10 @@ categories = ["cryptography", "no-std"]
 
 [features]
 default = ["handle", "keyring"]
-# handle_proof requires alloc — disable for bare-metal targets
-handle = ["dep:vsf"]
+# handle_proof alone: the memory-hard proof over a handle's hash, pure alloc + blake3 + i256, no vsf. For a caller that derives the hash itself (ferros's attest screen, whose keyboard can only type characters it carries the codes for).
+proof = []
+# The whole handle pipeline: handle_to_hash runs vsf's x text encoder (NFC + the full-codespace Huffman table), which needs std.
+handle = ["proof", "dep:vsf"]
 # keyring: the constant-size device-set commitment (Merkle root + inclusion proofs over spaghettify leaves).
 # Pure blake3 + spaghettify, but the tree fold uses alloc for the level buffers, so it requires alloc the way
 # `handle` does. Available WITHOUT `handle` so fgtw (default-features = false) can verify proofs.
