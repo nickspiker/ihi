@@ -12,7 +12,7 @@ categories = ["cryptography", "no-std"]
 default = ["handle", "keyring"]
 # handle_proof alone: the memory-hard proof over a handle's hash, pure alloc + blake3 + i256, no vsf. For a caller that derives the hash itself (ferros's attest screen, whose keyboard can only type characters it carries the codes for).
 proof = []
-# The whole handle pipeline: handle_to_hash runs vsf's x text encoder (NFC + the full-codespace Huffman table), which needs std.
+# The whole handle pipeline: handle_to_hash runs vsf's x text encoder (NFC + the full-codespace Huffman table). Since vsf 0.11's fixed-order codebook (owner 2026-11-10) that is the no_std `x-full` codec, 7.3 KB of tables, so a bare-metal caller (ferros) can hash a handle with ihi itself.
 handle = ["proof", "dep:vsf"]
 # keyring: the constant-size device-set commitment (Merkle root + inclusion proofs over spaghettify leaves).
 # Pure blake3 + spaghettify, but the tree fold uses alloc for the level buffers, so it requires alloc the way
@@ -44,7 +44,7 @@ keyring = []
 # Historical note: an earlier version of this crate depended on `spirix` (deterministic floating-point) for the spaghettify chaos layer. That dependency was removed and replaced with `chaos_amp` (pure integer math) precisely because a silent spirix minor-version bump across published ihi versions caused a bifurcated identity namespace — the same handle string resolved to different public IDs depending on which ihi version Cargo happened to pick. ihi has no transitive deps that can drift now. Keep it that way.
 blake3 = { version = "1", default-features = false }
 # vsf "0.6" is the FROZEN ENCODER LANE — published specifically for this pin (byte-identical to vsf 0.8.0 at the time of freezing). The x text encoder (NFC + full-codespace Huffman) behind handle_to_hash can never move underneath identity derivation while vsf's main lane iterates. Pinning the main lane instead would also recreate the vsf↔ihi cycle for vsf's handle feature. Do not bump this to a main-lane version; lane changes (0.6.43+) happen only as coordinated encoder emergencies.
-vsf = { version = "0.6", default-features = false, features = ["text-encode"], optional = true }
+vsf = { version = "0.11", path = "../vsf", default-features = false, features = ["x-full"], optional = true }
 sha2 = { version = "0.10", default-features = false }
 sha3 = { version = "0.10", default-features = false }
 i256 = { version = "0.2", default-features = false }
